@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">KenyaPower Bill</string>
+    <string name="prepaid">Prepaid</string>
+    <string name="postpaid">PostPaid</string>
+</resources>
