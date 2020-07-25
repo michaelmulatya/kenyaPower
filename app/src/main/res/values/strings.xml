@@ -4,5 +4,18 @@
     <string name="postpaid">PostPaid</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="calculate">Calculate</string>
+    <string name="amount_in_kshs">Amount in Kshs</string>
+    <string name="tariff">Tariff</string>
+    <string name="pre_paid_guide">Pre-Paid Guide</string>
+    <string name="token_calculator">Token Calculator</string>
     <!-- TODO: Remove or change this placeholder text -->
+    <string-array name="Tariff">
+        <item>Domestic</item>
+        <item>Domestic - Lifeline</item>
+    </string-array>
+    <!--    ad unit id-->
+    <string name="banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="native_ad_unit_id">ca-app-pub-3940256099942544/2247696110</string>
+
 </resources>

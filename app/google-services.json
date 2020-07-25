@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "517330779095",
+    "firebase_url": "https://kenyapower-bill-55fcb.firebaseio.com",
+    "project_id": "kenyapower-bill-55fcb",
+    "storage_bucket": "kenyapower-bill-55fcb.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:517330779095:android:6dbe3ed0b68c2e5281e992",
+        "android_client_info": {
+          "package_name": "com.bluefox.kenyapowerbill"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "517330779095-5eu4vfbnq5b0ms81t96p9hbfqk33muqb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAWdjnyhQpwuBg7g78-d11t0WO5QXuiRiA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "517330779095-5eu4vfbnq5b0ms81t96p9hbfqk33muqb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
