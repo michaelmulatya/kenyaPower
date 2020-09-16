@@ -1,0 +1,1 @@
+undefined int drawable gnt_rounded_corners_shape

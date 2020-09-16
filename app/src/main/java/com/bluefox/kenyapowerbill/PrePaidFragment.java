@@ -1,5 +1,6 @@
  package com.bluefox.kenyapowerbill;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.cardview.widget.CardView;
@@ -32,11 +33,13 @@ import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
-/**
+ /**
  * A simple {@link Fragment} subclass.
  * Use the {@link PrePaidFragment#newInstance} factory method to
  * create an instance of this fragment.
@@ -114,20 +117,21 @@ public class PrePaidFragment extends Fragment {
                     int amount = Integer.parseInt(mEtAmount.getText().toString());
                     if(amount >249){
                         Log.i("value for spinner","position "+position);
-                        String url = "http://36ebef90c7c7.ngrok.io/prepaid";
+                        String url = "https://3e7dfb7a70e4.ngrok.io/prepaid";
                         String postBody = "{\"amount\":" + amount + ",\"tariff\":\"" + position + "\"}\n";
                         MediaType JSON = MediaType.parse("application/json; charset=utf-8");
                         RequestBody body = RequestBody.create(JSON, postBody);
                         Request request = new Request.Builder()
                                 .url(url)
-                                .post(body)
                                 .build();
                         OkHttpClient client = new OkHttpClient();
+                        client.setConnectTimeout(50, TimeUnit.SECONDS);
+                        client.setReadTimeout(10,TimeUnit.MINUTES);
                         client.newCall(request).enqueue(new Callback() {
                             @Override
                             public void onFailure(Request request, IOException e) {
                                 e.printStackTrace();
-                                Toast.makeText(getContext(), "An error occurred, try again", Toast.LENGTH_SHORT).show();
+//                                Toast.makeText(getContext(), "An error occurred, try again", Toast.LENGTH_SHORT).show();
 
                             }
 
@@ -136,8 +140,12 @@ public class PrePaidFragment extends Fragment {
                                 if(!response.isSuccessful()){
                                     throw new IOException("Unexpected Code "+ response);
                                 }else {
-                                    Log.i("response from server", " "+response.body().toString());
-                                    
+                                    String jsondata = response.body().string();
+                                    Log.i("response from server", " "+jsondata);
+                                    Intent intent = new Intent(getActivity(),ResultsActivity.class);
+                                    intent.putExtra("jsondata", jsondata);
+                                    startActivity(intent);
+
 
                                 }
 
@@ -184,7 +192,7 @@ public class PrePaidFragment extends Fragment {
 
             }
 
-            private void populateNativeAd(UnifiedNativeAd unifiedNativeAd, UnifiedNativeAdView adView) {
+            private void populateNativeAd(UnifiedNativeAd nativeAd, UnifiedNativeAdView adView) {
                 adView.setHeadlineView(view.findViewById(R.id.ad_headline));
                 adView.setAdvertiserView(view.findViewById(R.id.ad_advertiser));
                 adView.setBodyView(view.findViewById(R.id.ad_body_text));
