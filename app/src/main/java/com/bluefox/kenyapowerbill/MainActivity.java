@@ -3,6 +3,7 @@ package com.bluefox.kenyapowerbill;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager.widget.ViewPager;
 
+import android.content.IntentFilter;
 import android.os.Bundle;
 
 import com.google.android.gms.ads.MobileAds;
@@ -24,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
         // TabLayout and Tab Items initialization
         TabLayout tabLayout = findViewById(R.id.tablayout);
         TabItem prepaid = findViewById(R.id.prepaid);
@@ -33,6 +35,9 @@ public class MainActivity extends AppCompatActivity {
         final ViewPager viewPager = findViewById(R.id.viewPager);
         PagerAdapter pagerAdapter = new PagerAdapter(getSupportFragmentManager(),tabLayout.getTabCount());
         viewPager.setAdapter(pagerAdapter);
+        tabLayout.setupWithViewPager(viewPager);
+        tabLayout.getTabAt(0).setText(getResources().getText(R.string.prepaid));
+        tabLayout.getTabAt(1).setText(getResources().getText(R.string.postpaid));
 
         //TabLayout selection listener
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {

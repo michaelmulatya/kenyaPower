@@ -1,8 +1,16 @@
  package com.bluefox.kenyapowerbill;
 
+import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 
@@ -10,6 +18,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -20,9 +29,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import com.google.android.ads.nativetemplates.TemplateView;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdLoader;
 import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.ads.formats.MediaView;
 import com.google.android.gms.ads.formats.UnifiedNativeAd;
 import com.google.android.gms.ads.formats.UnifiedNativeAdView;
@@ -59,9 +70,14 @@ public class PrePaidFragment extends Fragment {
     private EditText mEtAmount;
     private Button mBttnCalculate;
     private UnifiedNativeAd nativeAd;
+    private ProgressDialog progressDialog;
+     private CardView cardView;
+     private NetworkChecker networkChecker;
+     private IntentFilter intentFilter;
+     private InterstitialAd token_interstitialAd;
 
 
-    public PrePaidFragment() {
+     public PrePaidFragment() {
         // Required empty public constructor
     }
 
@@ -96,33 +112,76 @@ public class PrePaidFragment extends Fragment {
 
     }
 
+
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_pre_paid, container, false);
 
+
+
         //populate the spinner with an array of strings
+        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+
         tariff = view.findViewById(R.id.prepaid_tariff);
         mEtAmount =view.findViewById(R.id.etAmount);
         mBttnCalculate = view.findViewById(R.id.btnCalculate);
+
+        //initialise and load interstitial ads
+        token_interstitialAd = new InterstitialAd(getActivity());
+        token_interstitialAd.setAdUnitId(getResources().getString(R.string.token_interstitial_unit_id));
+        token_interstitialAd.loadAd(new AdRequest.Builder().build());
+
+
+
         refreshAd(view);
+        cardView = view.findViewById(R.id.ad_cardview);
+        /// Register Broadcast receiver
+        networkChecker = new NetworkChecker(){
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if(NetworkChecker.checkInternetConenction(context)){
+                    cardView.setVisibility(View.VISIBLE);
+                    refreshAd(view);
+                    token_interstitialAd.loadAd(new AdRequest.Builder().build());
+                }else {
+                    Toast.makeText(context, "No Internet connection!", Toast.LENGTH_LONG).show();
+
+                }
+
+            }
+        };
+        intentFilter = new IntentFilter();
+        intentFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");
+        intentFilter.addAction("android.net.wifi.WIFI_STATE_CHANGED");
+        getActivity().registerReceiver(networkChecker, intentFilter);
+
+
+
+//https://www.youtube.com/watch?v=bb3vR-QvjKM progress dialog
 
         mBttnCalculate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                refreshAd(view);
                 int position = tariff.getSelectedItemPosition();
                 if(!mEtAmount.getText().toString().isEmpty()){
                     int amount = Integer.parseInt(mEtAmount.getText().toString());
                     if(amount >249){
+                        progressDialog = new ProgressDialog(getActivity());
+                        progressDialog.show();
+                        progressDialog.setContentView(R.layout.progress_dialog);
+                        progressDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+                        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
                         Log.i("value for spinner","position "+position);
-                        String url = "https://3e7dfb7a70e4.ngrok.io/prepaid";
+                        String url = "https://stima-app.herokuapp.com/prepaid";
                         String postBody = "{\"amount\":" + amount + ",\"tariff\":\"" + position + "\"}\n";
                         MediaType JSON = MediaType.parse("application/json; charset=utf-8");
                         RequestBody body = RequestBody.create(JSON, postBody);
                         Request request = new Request.Builder()
                                 .url(url)
+                                .post(body)
                                 .build();
                         OkHttpClient client = new OkHttpClient();
                         client.setConnectTimeout(50, TimeUnit.SECONDS);
@@ -131,6 +190,11 @@ public class PrePaidFragment extends Fragment {
                             @Override
                             public void onFailure(Request request, IOException e) {
                                 e.printStackTrace();
+                                progressDialog.dismiss();
+                                if(token_interstitialAd.isLoaded()){
+                                    token_interstitialAd.show();
+
+                                }
 //                                Toast.makeText(getContext(), "An error occurred, try again", Toast.LENGTH_SHORT).show();
 
                             }
@@ -140,16 +204,38 @@ public class PrePaidFragment extends Fragment {
                                 if(!response.isSuccessful()){
                                     throw new IOException("Unexpected Code "+ response);
                                 }else {
+                                    progressDialog.dismiss();
                                     String jsondata = response.body().string();
-                                    Log.i("response from server", " "+jsondata);
-                                    Intent intent = new Intent(getActivity(),ResultsActivity.class);
-                                    intent.putExtra("jsondata", jsondata);
-                                    startActivity(intent);
+
+                                    token_interstitialAd.setAdListener(new AdListener(){
+                                        @Override
+                                        public void onAdClosed() {
+                                            Log.i("response from server", " "+jsondata);
+                                            Intent intent = new Intent(getActivity(),ResultsActivity.class);
+                                            intent.putExtra("jsondata", jsondata);
+                                            startActivity(intent);
+                                            token_interstitialAd.loadAd(new AdRequest.Builder().build());
+                                        }
+                                    });
+                                    if(token_interstitialAd.isLoaded()){
+                                        token_interstitialAd.show();
+
+                                    }else {
+                                        Log.i("response from server", " "+jsondata);
+                                        Intent intent = new Intent(getActivity(),ResultsActivity.class);
+                                        intent.putExtra("jsondata", jsondata);
+                                        startActivity(intent);
+
+                                    }
+
 
 
                                 }
 
+
                             }
+
+
                         });
 
 
@@ -174,72 +260,26 @@ public class PrePaidFragment extends Fragment {
 
         return view;
     }
+     private boolean isNetworkAvailable() {
+         ConnectivityManager connectivityManager
+                 = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+     }
 
     private void refreshAd(View view) {
-        AdLoader.Builder builder = new AdLoader.Builder(getContext(), getString(R.string.native_ad_unit_id));
+
+        AdLoader.Builder builder = new AdLoader.Builder(getActivity(), getString(R.string.token_native_ad_unit_id));
         builder.forUnifiedNativeAd(new UnifiedNativeAd.OnUnifiedNativeAdLoadedListener() {
             @Override
             public void onUnifiedNativeAdLoaded(UnifiedNativeAd unifiedNativeAd) {
-                if (nativeAd != null)
-                    nativeAd = unifiedNativeAd;
-                CardView cardView = view.findViewById(R.id.ad_cardview);
 
-                UnifiedNativeAdView adView = (UnifiedNativeAdView) getLayoutInflater().inflate(R.layout.native_ad_layout, null);
-
-                populateNativeAd(unifiedNativeAd, adView);
-                cardView.removeAllViews();
-                cardView.addView(adView);
+                TemplateView templateView = view.findViewById(R.id.native_adView);
+                templateView.setNativeAd(unifiedNativeAd);
 
             }
 
-            private void populateNativeAd(UnifiedNativeAd nativeAd, UnifiedNativeAdView adView) {
-                adView.setHeadlineView(view.findViewById(R.id.ad_headline));
-                adView.setAdvertiserView(view.findViewById(R.id.ad_advertiser));
-                adView.setBodyView(view.findViewById(R.id.ad_body_text));
-                adView.setStarRatingView(view.findViewById(R.id.star_rating));
-                adView.setMediaView((MediaView) adView.findViewById(R.id.media_view));
-                adView.setCallToActionView(view.findViewById(R.id.ad_call_to_action));
-                adView.setIconView(view.findViewById(R.id.adv_icon));
 
-                adView.getMediaView().setMediaContent(nativeAd.getMediaContent());
-                ((TextView)adView.getHeadlineView()).setText(nativeAd.getHeadline());
-
-                if (nativeAd.getBody() == null) {
-                    adView.getBodyView().setVisibility(View.INVISIBLE);
-                } else {
-                    ((TextView) adView.getBodyView()).setText(nativeAd.getBody());
-                    adView.getBodyView().setVisibility(View.VISIBLE);
-
-                }
-
-                if (nativeAd.getAdvertiser() == null) {
-                    adView.getAdvertiserView().setVisibility(View.INVISIBLE);
-                } else {
-                    ((TextView) adView.getAdvertiserView()).setText(nativeAd.getAdvertiser());
-                    adView.getAdvertiserView().setVisibility(View.VISIBLE);
-                }
-                if (nativeAd.getStarRating() == null) {
-                    adView.getStarRatingView().setVisibility(View.INVISIBLE);
-                } else {
-                    ((RatingBar) adView.getStarRatingView()).setRating(nativeAd.getStarRating().floatValue());
-                    adView.getStarRatingView().setVisibility(View.VISIBLE);
-                }
-
-                if (nativeAd.getIcon() == null) {
-                    adView.getIconView().setVisibility(View.GONE);
-                } else {
-                    ((ImageView) adView.getIconView()).setImageDrawable(nativeAd.getIcon().getDrawable());
-                    adView.getIconView().setVisibility(View.VISIBLE);
-                }
-                if (nativeAd.getCallToAction() == null) {
-                    adView.getCallToActionView().setVisibility(View.INVISIBLE);
-                } else {
-                    adView.getCallToActionView().setVisibility(View.VISIBLE);
-                    ((Button) adView.getCallToActionView()).setText(nativeAd.getCallToAction());
-                }
-
-                adView.setNativeAd(nativeAd);
-            }
         });
 
         AdLoader adLoader = builder.withAdListener(new AdListener(){
@@ -258,4 +298,35 @@ public class PrePaidFragment extends Fragment {
             nativeAd.destroy();
         super.onDestroy();
     }
-}
+
+     @Override
+     public void onResume() {
+         super.onResume();
+         networkChecker = new NetworkChecker(){
+             @Override
+             public void onReceive(Context context, Intent intent) {
+                 if(NetworkChecker.checkInternetConenction(context)){
+                     cardView.setVisibility(View.VISIBLE);
+                     refreshAd(getView());
+                     token_interstitialAd.loadAd(new AdRequest.Builder().build());
+                 }else {
+                     Toast.makeText(context, "No Internet connection!", Toast.LENGTH_LONG).show();
+
+                 }
+
+             }
+         };
+         intentFilter = new IntentFilter();
+         intentFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");
+         intentFilter.addAction("android.net.wifi.WIFI_STATE_CHANGED");
+         getActivity().registerReceiver(networkChecker, intentFilter);
+     }
+
+     @Override
+     public void onPause() {
+         super.onPause();
+         if(this.networkChecker != null){
+             getActivity().unregisterReceiver(networkChecker);
+         }
+     }
+ }

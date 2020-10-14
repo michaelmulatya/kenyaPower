@@ -5,14 +5,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".PrePaidFragment">
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/icons"
+            android:layout_height="wrap_content"
             android:orientation="vertical">
 
             <TextView
@@ -79,7 +79,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:entries="@array/Tariff"
-                        android:padding="8dp" />
+                        android:padding="8dp"
+                        android:theme="@style/spinnerTheme" />
                 </LinearLayout>
 
             </androidx.cardview.widget.CardView>
@@ -116,7 +117,9 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_horizontal"
                         android:gravity="center_horizontal"
-                        android:padding="8dp"
+                        android:paddingLeft="8dp"
+                        android:paddingTop="8dp"
+                        android:paddingRight="8dp"
                         android:text="@string/amount_in_kshs"
                         android:textColor="#FFFFFF"
                         android:textSize="18sp"
@@ -130,7 +133,11 @@
                         android:ems="10"
                         android:gravity="center_horizontal"
                         android:inputType="number"
-                        android:padding="8dp" />
+                        android:paddingLeft="8dp"
+                        android:paddingTop="16dp"
+                        android:paddingRight="8dp"
+                        android:paddingBottom="8dp"
+                        android:textColor="@color/icons" />
                 </LinearLayout>
 
             </androidx.cardview.widget.CardView>
@@ -144,9 +151,7 @@
                 android:layout_marginTop="28dp"
                 android:layout_marginEnd="8dp"
                 android:layout_marginRight="8dp"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:visibility="visible"
+                android:visibility="gone"
                 app:cardBackgroundColor="@color/colorPrimary"
                 app:layout_constraintEnd_toEndOf="@+id/cardView2"
                 app:layout_constraintStart_toStartOf="@+id/cardView2"
@@ -155,10 +160,15 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:padding="12dp">
+                    android:orientation="vertical">
 
-                    <include layout="@layout/native_ad_layout" />
+                    <com.google.android.ads.nativetemplates.TemplateView
+                        android:id="@+id/native_adView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:gnt_template_type="@layout/gnt_medium_template_view" />
+
+                    <!--                    <include layout="@layout/native_ad_layout" />-->
 
 
                 </LinearLayout>
